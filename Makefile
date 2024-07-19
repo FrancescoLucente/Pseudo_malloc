@@ -7,13 +7,14 @@ AR=ar
 OBJS=pool_allocator.o\
      linked_list.o\
      bit_map.o\
-     buddy_allocator.o
+     buddy_allocator.o\
+	 pseudo_malloc.o
 
-HEADERS=linked_list.h  pool_allocator.h bit_map.h buddy_allocator.h
+HEADERS=linked_list.h  pool_allocator.h bit_map.h buddy_allocator.h pseudo_malloc.h
 
 LIBS=libbuddy.a
 
-BINS=pool_allocator_test buddy_test buddy_allocator_test
+BINS=pool_allocator_test buddy_test buddy_allocator_test test_pseudo_malloc
 
 .phony: clean all
 
@@ -34,6 +35,10 @@ buddy_test: buddy_test.o $(LIBS)
 
 buddy_allocator_test: buddy_allocator_test.o $(LIBS)
 	$(CC) $(CCOPTS) -o $@ $^ -lm
+
+test_pseudo_malloc: test_pseudo_malloc.o $(LIBS)
+	$(CC) $(CCOPTS) -o $@ $^ -lm
+
 
 clean:
 	rm -rf *.o *~ $(LIBS) $(BINS)

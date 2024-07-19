@@ -33,19 +33,45 @@ void init_system(){
 }
 
 void* pseudo_malloc(size_t size){
+    void* result;
     if (!initialized){
         init_system();
     }
     if (size<=0){
         printf("dimensione non corretta per un'allocazione");
+        return NULL;
+    }
+    size_t total_size=size+sizeof(size_t);
+    if (size<SMALL_ALLOC){
+        result=BuddyAllocator_malloc(&alloc,total_size);
+        if (!result){
+            printf("errore nell'allocamento con BuddyAllocator");
+            return NULL;
+            }
+        
+        
+    }else{
+        result=mmap(NULL,total_size,PROT_READ | PROT_WRITE,MAP_ANONYMOUS|MAP_PRIVATE,-1,0);
+        if (result == MAP_FAILED) {
+            perror("Errore nell'allocazione con mmap");
+            return NULL;
+        }
+        
+    }
+    *((size_t*)result)=total_size;
+    return result+sizeof(size_t);
+}
+void pseudo_free(void*ptr){
+    if(!ptr){
+        printf("errore, impossibile liberare una risorsa null");
         return;
     }
-    if (size<SMALL_ALLOC){
-
+    size_t size=(*((size_t*)ptr));
+    if(size-sizeof(size_t)<SMALL_ALLOC){
+        BuddyAllocator_free(&alloc,ptr);
     }else{
-
+        if (munmap(ptr,size)==-1){
+            perror("errore nella rimozione della memoria mappata");
+        }
     }
-}
-void* pseudo_free(void*ptr){
-
 }
