@@ -20,7 +20,7 @@ int initialized=0;
 
 void init_system(){
     if (initialized) return;
-    BuddyAllocator_init(&alloc, LEVELS, bitmap_buffer, BITMAP_SIZE, memory, MIN_BLOCK);
+    BuddyAllocator_init(&alloc, LEVELS, bitmap_buffer, BITMAP_SIZE, memory,MEMORY_SIZE, MIN_BLOCK);
     initialized=1;
 }
 

@@ -34,6 +34,4 @@ int BitMap_bit(const BitMap* bit_map, int bit_num){
   int bit_in_byte=byte_num&0x03;
   return (bit_map->buffer[byte_num] & (1<<bit_in_byte))!=0;
 }
-void BitMap_update(BitMap bitmap,int idx,int value){
-  
-}
+
