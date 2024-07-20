@@ -1,5 +1,5 @@
-#pragma once
 
+#pragma once
 typedef enum {
   Success=0x0,
   NotEnoughMemory=-1,
