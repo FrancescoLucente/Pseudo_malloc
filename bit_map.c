@@ -22,23 +22,31 @@ void BitMap_init(BitMap* bit_map, int num_bits, char* buffer){
 
 // sets a the bit bit_num in the bitmap
 // status= 0 or 1
-void BitMap_setBit(BitMap* bit_map, int bit_num, int status){
+void BitMap_setBit(BitMap *bit_map, int bit_num, int status) {
   // get byte
-  int byte_num=bit_num>>3;
-  assert(byte_num<=bit_map->buffer_size);
-  int bit_in_byte=byte_num&0x03;
+  int byte_num = bit_num >> 3;
+  assert(byte_num < bit_map->buffer_size);
+  int bit_in_byte = byte_num & 0x03;
   if (status) {
-    bit_map->buffer[byte_num] |= (1<<bit_in_byte);
+    bit_map->buffer[byte_num] |= (1 << bit_in_byte);
   } else {
-    bit_map->buffer[byte_num] &= ~(1<<bit_in_byte);
+    bit_map->buffer[byte_num] &= ~(1 << bit_in_byte);
   }
 }
 
 // inspects the status of the bit bit_num
-int BitMap_bit(const BitMap* bit_map, int bit_num){
-  int byte_num=bit_num>>3; 
-  assert(byte_num<=bit_map->buffer_size);
-  int bit_in_byte=byte_num&0x03;
-  return (bit_map->buffer[byte_num] & (1<<bit_in_byte))!=0;
+int BitMap_bit(const BitMap *bit_map, int bit_num) {
+  int byte_num = bit_num >> 3;
+  assert(byte_num < bit_map->buffer_size);
+  int bit_in_byte = byte_num & 0x03;
+  return (bit_map->buffer[byte_num] & (1 << bit_in_byte)) != 0;
+}
+
+void BitMap_print(BitMap* bitmap){
+  int blocks=0;
+  for(int i = 0; i < bitmap->num_bits; ++i){
+    if(BitMap_bit(bitmap, i)==1) blocks++;
+  }
+  printf("blocks alloocated:%d\n",blocks);
 }
 

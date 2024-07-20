@@ -134,11 +134,12 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
     printf("\nerrore nei parametri\n");
     return NULL;
   }
-  int total_size=size+8;
+  
 
-  int level=find_level(alloc,total_size);
+  int level=find_level(alloc,size);
   int i=firstIdx(level);
   int end=lastIdx(level);
+  printf("il livello adatto per la dimensione è %d, il primo indice è %d e l'ultimo è %d\n",level,i,end);
   
   #ifdef _VERBOSE_
     printf("BuddyAllocator_malloc|requested: [ %d ] bytes -- level [ %d ] \n", size, level);
@@ -147,7 +148,9 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
   printf("\n scorro la bitmap da %d a %d",i,end);
   while(i<end){
     if (BitMap_bit(&(alloc->bitmap),i)==0){
+      printf("\ntrovato!il nostro indice ha valore %d\n",i);
       BitMap_setBit(&(alloc->bitmap),i,1);
+      printf("\nverifichiamo di aver settato bene %d\n",BitMap_bit(&(alloc->bitmap),i));
       printf("\nchiamo il padre\n");
       BuddyAllocator_update_parents(alloc,i,1);
       printf("\nchiamo il figlio\n");
@@ -164,9 +167,13 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
   }
   int block_size=alloc->min_bucket_size<<(alloc->num_levels-level);
   char* ret=(alloc->memory+(i-startIdx(i))*block_size);
+  printf("\nabbiamo allocato il blocco %desimo dei blocchi di grandezza %d bytes, che ha indice %d",i-startIdx(i),block_size,i);
   *((int*)ret)=0;
-  *(((int*)ret)+1)=i;
-  return (void*)(ret+8);
+  *(((int*)ret)+1)= i;
+    printf("Stored index %d at %p\n", *((int*)(ret + sizeof(int))), (void*)(ret + sizeof(int)));
+
+  return (void*)(((int*)ret)+2*sizeof(int));
+
 }
 // releases allocated memory
 
@@ -178,9 +185,16 @@ void BuddyAllocator_free(BuddyAllocator *alloc, void *mem) {
     printf("\nBuddyAllocator_free|WARINING, cannot free this memory address\n");
     return; 
   }
+  printf("\ninizio a deallocare\n");
   // we retrieve the buddy from the system
-  int idx=*(((int*)mem)-1);
+  int* tmp=(int*)mem;
+  int idx=*(((int*)mem)-9);
+  printf("\ninizio a deallocare partendo dall'indice %d   %p\n",idx,((int*)mem)-9);
   BuddyAllocator_releaseBuddy(alloc,idx);
   
+}
+void BuddyAllocator_print(BuddyAllocator* buddy){
+  printf("\n ecco lo stato del buddy\n");
+  BitMap_print((&buddy->bitmap));
 }
 

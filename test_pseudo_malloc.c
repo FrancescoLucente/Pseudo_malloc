@@ -29,26 +29,28 @@ int main(int argc, char** argv){
         printf("errore nel buddy allocator");
         exit(-1);
     }
-    printf("allocazione andata bene! proviamo ad accedere");
+    BuddyAllocator_print(&alloc);
+    printf("\nallocazione andata bene! proviamo ad accedere\n");
     for (int i=0;i<10;i++){
         ptr1[i]=i;
         printf(" %d",ptr1[i]);
     }
-    printf("\nprovo pseudo_free con risorsa allocata con buddy");
+    printf("\nprovo pseudo_free con risorsa allocata con buddy\n");
     pseudo_free(ptr1,&alloc);
-    
-    printf("prima prova con mmap\n");
+    BuddyAllocator_print(&alloc);
+    printf("\nprima prova con mmap\n");
     int* ptr2=(int*)pseudo_malloc(256*sizeof(int),NULL);
     if (!ptr2) {
         printf("errore nel mmap");
         exit(-1);
     }
+     printf("\nallocazione andata bene! proviamo ad accedere\n");
     for (int i=0;i<256;i++){
         ptr2[i]=i;
         printf(" %d",ptr2[i]);
     }
-    printf("\nprovo pseudo_free");
+    printf("\nprovo pseudo_free\n");
     pseudo_free(ptr2,NULL);
-
+    printf("\n free con munmap riuscita!");
 
 }

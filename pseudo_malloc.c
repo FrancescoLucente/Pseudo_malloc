@@ -37,9 +37,9 @@ void* pseudo_malloc(size_t size,BuddyAllocator* alloc){
             return NULL;
         }
         *((int*)result)=1;
-        *(((int*)result)+1)=size;
+        *(((int*)result)+1)=total_size;
     }
-    *((size_t*)result)=total_size;
+    
     return (void*)(((int*)result)+2);
 }
 void pseudo_free(void*ptr,BuddyAllocator* alloc){
@@ -48,11 +48,15 @@ void pseudo_free(void*ptr,BuddyAllocator* alloc){
         return;
     }
    int bit=*(((int*)ptr)-2);
+   int size=*(((int*)ptr)-1);
+   printf("il bit per capire con cosa deallocare è %d e il secondo valore è %d",bit,size);
     if(bit==0){
         BuddyAllocator_free(alloc,ptr);
     }else if (bit==1){
-        if (munmap(ptr,(size_t) bit)==-1){
+        if (munmap((void*)(((int*)ptr)-2),(size_t) size)==-1){
             perror("\nerrore nella rimozione della memoria mappata\n");
         }
+    }else{
+        printf("\nerrore indefinito nella free\n");
     }
 }
