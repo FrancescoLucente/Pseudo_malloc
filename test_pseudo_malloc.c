@@ -4,7 +4,7 @@
 
 #define SMALL_ALLOC 1024
 #define LEVELS 15
-#define BITMAP_SIZE 4096
+#define BITMAP_SIZE 8192
 #define MIN_BLOCK 32
 #define MEMORY_SIZE (1024*1024)
 
@@ -25,20 +25,27 @@ int main(int argc, char** argv){
 
     printf("prima prova con buddy \n");
     int* ptr1=(int*)pseudo_malloc(10*sizeof(int),&alloc);
+    printf("questoè il puntatore che ci è stato dato %p", (void*)ptr1);
     if (!ptr1) {
         printf("errore nel buddy allocator");
         exit(-1);
     }
+    BuddyAllocator_print(&alloc);
+    void* ptr12=pseudo_malloc(10*sizeof(int),&alloc);
+    printf("questoè il puntatore che ci è stato dato %p", (void*)ptr12);
     BuddyAllocator_print(&alloc);
     printf("\nallocazione andata bene! proviamo ad accedere\n");
     for (int i=0;i<10;i++){
         ptr1[i]=i;
         printf(" %d",ptr1[i]);
     }
+    printf("\n ora accedo al secondo\n");
     printf("\nprovo pseudo_free con risorsa allocata con buddy\n");
     pseudo_free(ptr1,&alloc);
     BuddyAllocator_print(&alloc);
-    printf("\nprima prova con mmap\n");
+    pseudo_free(ptr12,&alloc);
+    BuddyAllocator_print(&alloc);
+    /*printf("\nprima prova con mmap\n");
     int* ptr2=(int*)pseudo_malloc(256*sizeof(int),NULL);
     if (!ptr2) {
         printf("errore nel mmap");
@@ -51,6 +58,6 @@ int main(int argc, char** argv){
     }
     printf("\nprovo pseudo_free\n");
     pseudo_free(ptr2,NULL);
-    printf("\n free con munmap riuscita!");
+    printf("\n free con munmap riuscita!");*/
 
 }

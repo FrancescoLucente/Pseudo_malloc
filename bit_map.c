@@ -26,7 +26,7 @@ void BitMap_setBit(BitMap *bit_map, int bit_num, int status) {
   // get byte
   int byte_num = bit_num >> 3;
   assert(byte_num < bit_map->buffer_size);
-  int bit_in_byte = byte_num & 0x03;
+  int bit_in_byte = bit_num & 0x07;
   if (status) {
     bit_map->buffer[byte_num] |= (1 << bit_in_byte);
   } else {
@@ -38,15 +38,16 @@ void BitMap_setBit(BitMap *bit_map, int bit_num, int status) {
 int BitMap_bit(const BitMap *bit_map, int bit_num) {
   int byte_num = bit_num >> 3;
   assert(byte_num < bit_map->buffer_size);
-  int bit_in_byte = byte_num & 0x03;
+  int bit_in_byte = bit_num & 0x07;
   return (bit_map->buffer[byte_num] & (1 << bit_in_byte)) != 0;
 }
 
 void BitMap_print(BitMap* bitmap){
   int blocks=0;
   for(int i = 0; i < bitmap->num_bits; ++i){
+    //printf("%d",BitMap_bit(bitmap, i));
     if(BitMap_bit(bitmap, i)==1) blocks++;
   }
-  printf("blocks alloocated:%d\n",blocks);
+  printf("\nblocks allocated:%d\n",blocks);
 }
 

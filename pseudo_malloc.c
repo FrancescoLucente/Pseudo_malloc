@@ -28,7 +28,7 @@ void* pseudo_malloc(size_t size,BuddyAllocator* alloc){
             printf("\nerrore nell'allocamento con BuddyAllocator\n");
             return NULL;
             }
-        
+        return result;
         
     }else{
         result=mmap(NULL,total_size,PROT_READ | PROT_WRITE,MAP_ANONYMOUS|MAP_PRIVATE,-1,0);
@@ -47,13 +47,18 @@ void pseudo_free(void*ptr,BuddyAllocator* alloc){
         printf("\nerrore, impossibile liberare una risorsa null\n");
         return;
     }
-   int bit=*(((int*)ptr)-2);
-   int size=*(((int*)ptr)-1);
-   printf("il bit per capire con cosa deallocare è %d e il secondo valore è %d",bit,size);
-    if(bit==0){
+    printf("il puntatore è a questo indirizzo: %p", (void*)ptr);
+   ptr=ptr-2*sizeof(int);
+   printf("\n dopo la sottrazione il puntatore è a questo indirizzo: %p\n", (void*)ptr);
+   int* mem=(int*)ptr;
+   
+   
+   printf("il bit per capire con cosa deallocare è %d e il secondo valore è %d ",mem[0],mem[1]);
+    if(mem[0]==0){
+        
         BuddyAllocator_free(alloc,ptr);
-    }else if (bit==1){
-        if (munmap((void*)(((int*)ptr)-2),(size_t) size)==-1){
+    }else if (mem[0]==1){
+        if (munmap((void*)ptr,mem[1])){
             perror("\nerrore nella rimozione della memoria mappata\n");
         }
     }else{

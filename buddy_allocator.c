@@ -39,6 +39,21 @@ int find_level(BuddyAllocator* alloc ,int size){
   return ret;
 }
 
+
+int count_childs(int idx,BuddyAllocator* alloc){
+  if (levelIdx(idx)>alloc->num_levels) return 0;
+  if (levelIdx(idx)==alloc->num_levels) return 1;
+  return count_childs(2*idx+1,alloc)+count_childs(2*idx+2,alloc);
+}
+
+
+int count_parents(int idx,BuddyAllocator* alloc){
+  if (levelIdx(idx)<=0) return 0;
+  return 1+count_parents(parentIdx(idx),alloc);
+  }
+
+
+
 // computes the size in bytes for the allocator
 int BuddyAllocator_calcSize(int num_levels) {
   int list_items = (1 << (num_levels))-1; // maximum number of allocations, used
@@ -48,7 +63,7 @@ int BuddyAllocator_calcSize(int num_levels) {
 }
 void BuddyAllocator_update_childs(BuddyAllocator* alloc,int idx,int value){
   
-  if (idx>=alloc->bitmap.buffer_size||(2*idx)+1>alloc->bitmap.buffer_size) return;
+  if (idx>=alloc->bitmap.num_bits-1||2*idx+1>=alloc->bitmap.num_bits-1) return;
   BitMap_setBit(&(alloc->bitmap),2*idx+1,value);
   BitMap_setBit(&(alloc->bitmap),2*idx+2,value);
   BuddyAllocator_update_childs(alloc,2*idx+1,value);
@@ -63,8 +78,11 @@ void BuddyAllocator_merge(BuddyAllocator* alloc, int idx){
   }
 }
 void BuddyAllocator_update_parents(BuddyAllocator* alloc, int idx,int value){
-  if (idx<0||BitMap_bit(&(alloc->bitmap),parentIdx(idx))==1) return;
+  int bit_padre=BitMap_bit(&(alloc->bitmap),parentIdx(idx));
+  printf("\nil bit di sto cazzo di padre è %d",bit_padre);
+  if (idx<=0||bit_padre==value) return;
   BitMap_setBit(&(alloc->bitmap),parentIdx(idx),value);
+  BuddyAllocator_update_parents(alloc,parentIdx(idx),value);
 }
 void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int buffer_size, char *memory,int memory_size, int min_bucket_size) {
 
@@ -79,7 +97,7 @@ void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int
   //controlli vari
   int max_levels = floor(log2(memory_size / min_bucket_size));
   assert(num_levels <= max_levels);
-  int max_items =(1<<(num_levels))-1;
+  int max_items =(1<<(num_levels+1))-1;
   int bitmap_size=(max_items+7)/8;
   assert(buffer_size >= bitmap_size);
   assert(memory_size>=BuddyAllocator_calcSize(num_levels));
@@ -87,7 +105,9 @@ void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int
 
 
 
-  
+  if (log2(memory_size) != floor(log2(memory_size))){
+        memory_size = min_bucket_size << num_levels;
+    }
   alloc->num_levels = num_levels;
   alloc->memory = memory;
   alloc->min_bucket_size = min_bucket_size;
@@ -151,9 +171,9 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
       printf("\ntrovato!il nostro indice ha valore %d\n",i);
       BitMap_setBit(&(alloc->bitmap),i,1);
       printf("\nverifichiamo di aver settato bene %d\n",BitMap_bit(&(alloc->bitmap),i));
-      printf("\nchiamo il padre\n");
+      printf("\nchiamo il padre di %d che dovrebbe essere %d e tutti i padri sono %d\n",i,parentIdx(i),count_parents(i,alloc));
       BuddyAllocator_update_parents(alloc,i,1);
-      printf("\nchiamo il figlio\n");
+      printf("\nchiamo i figli di %d che dovrebbero essere %d e %d e in totale %d\n",i,2*i+1,2*i+2,count_childs(i,alloc));
       BuddyAllocator_update_childs(alloc,i,1);
       found=1;
       break;
@@ -168,11 +188,12 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
   int block_size=alloc->min_bucket_size<<(alloc->num_levels-level);
   char* ret=(alloc->memory+(i-startIdx(i))*block_size);
   printf("\nabbiamo allocato il blocco %desimo dei blocchi di grandezza %d bytes, che ha indice %d",i-startIdx(i),block_size,i);
-  *((int*)ret)=0;
-  *(((int*)ret)+1)= i;
-    printf("Stored index %d at %p\n", *((int*)(ret + sizeof(int))), (void*)(ret + sizeof(int)));
+  int* result=(int*)ret;
+  *result=0;
+  *(result+1)=i;
+    printf("\n Stored bit %d at %p Stored index %d at %p and we return %p\n",*(result),(void*)result, *(result+1), (void*)(result+1),(void*)(result+2));
 
-  return (void*)(((int*)ret)+2*sizeof(int));
+return (void*)(result + 2);
 
 }
 // releases allocated memory
@@ -187,9 +208,11 @@ void BuddyAllocator_free(BuddyAllocator *alloc, void *mem) {
   }
   printf("\ninizio a deallocare\n");
   // we retrieve the buddy from the system
+  printf("il puntatore che ci è stato passato punta a %p",(void*)mem);
   int* tmp=(int*)mem;
-  int idx=*(((int*)mem)-9);
-  printf("\ninizio a deallocare partendo dall'indice %d   %p\n",idx,((int*)mem)-9);
+  int idx=*(tmp+1);
+  printf("dopo cast e somma punta a: %p",(void*)(tmp+1));
+  printf("\ninizio a deallocare partendo dall'indice %d   %p\n",idx,(tmp+1));
   BuddyAllocator_releaseBuddy(alloc,idx);
   
 }
