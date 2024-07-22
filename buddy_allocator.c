@@ -88,11 +88,23 @@ int BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int 
     printf("\nbuffer per bitmap non corretto");
     return 0;
     }
-  if (!memory){
+  if (!memory||memory_size<=0){
     printf("\nmemoria non corretta");
     return 0;
   }
-  
+  if (min_bucket_size<16){
+  printf("\nnumero di byte per blocco minimo troppo basso");
+  return 0;
+  }
+  if (log2(min_bucket_size)!= floor(log2(min_bucket_size))){
+        printf("\nnumero di byte per blocco minimo non potenza di due");
+  return 0;
+  }
+  int max_levels = floor(log2(memory_size / min_bucket_size));
+  if(num_levels > max_levels){
+    printf("\nnumero livelli non corretto");
+    return 0;
+  }
   if(memory_size<=BuddyAllocator_calcSize(num_levels)){
     printf("\ndimensione memoria non corretta");
     return 0;
@@ -100,12 +112,7 @@ int BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int 
 
 
 
-  //controlli vari
-  int max_levels = floor(log2(memory_size / min_bucket_size));
-  if(num_levels > max_levels){
-    printf("\nnumero livelli non corretto");
-    return 0;
-  }
+  
   
   int max_items =(1<<(num_levels+1))-1;
   int bitmap_size=(max_items+7)/8;
@@ -113,10 +120,6 @@ int BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int 
     printf("\ndimensione buffer non corretta");
     return 0;
   }
-if (min_bucket_size<16){
-  printf("\nnumero di livelli troppo basso");
-  return 0;
-}
   if (log2(memory_size) != floor(log2(memory_size))){
         memory_size = min_bucket_size << num_levels;
     }
@@ -136,10 +139,7 @@ if (min_bucket_size<16){
 
   
 
-  printf("BUDDY INITIALIZING\n");
-  printf("\tlevels: %d -- list-items: %d", num_levels, max_items);
-  printf("\tbucket size:%d\n", min_bucket_size);
-  printf("\tmanaged memory %d bytes\n", (1 << num_levels) * min_bucket_size);
+  
 
   return 1;
   
@@ -182,15 +182,10 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
     printf("BuddyAllocator_malloc|requested: [ %d ] bytes -- level [ %d ] \n", size, level);
   #endif
   int found=0;
-  printf("\n scorro la bitmap da %d a %d",i,end);
   while(i<end){
     if (BitMap_bit(&(alloc->bitmap),i)==0){
-      printf("\ntrovato!il nostro indice ha valore %d\n",i);
       BitMap_setBit(&(alloc->bitmap),i,1);
-      printf("\nverifichiamo di aver settato bene %d\n",BitMap_bit(&(alloc->bitmap),i));
-      printf("\nchiamo il padre di %d che dovrebbe essere %d e tutti i padri sono %d\n",i,parentIdx(i),count_parents(i,alloc));
       BuddyAllocator_update_parents(alloc,i,1);
-      printf("\nchiamo i figli di %d che dovrebbero essere %d e %d e in totale %d\n",i,2*i+1,2*i+2,count_childs(i,alloc));
       BuddyAllocator_update_childs(alloc,i,1);
       found=1;
       break;
@@ -208,7 +203,7 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
   int* result=(int*)ret;
   *result=0;
   *(result+1)=i;
-    printf("\n Stored bit %d at %p Stored index %d at %p and we return %p\n",*(result),(void*)result, *(result+1), (void*)(result+1),(void*)(result+2));
+    
 
 return (void*)(result + 2);
 
@@ -232,7 +227,7 @@ void BuddyAllocator_free(BuddyAllocator *alloc, void *mem) {
   
 }
 void BuddyAllocator_print(BuddyAllocator* buddy){
-  printf("\n ecco lo stato del buddy\n");
+ 
   BitMap_print((&buddy->bitmap));
 }
 

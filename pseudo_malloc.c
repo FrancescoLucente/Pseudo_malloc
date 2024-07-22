@@ -50,9 +50,7 @@ void pseudo_free(void**memo,BuddyAllocator* alloc){
         return;
     }
     void* ptr=*memo;
-    printf("il puntatore è a questo indirizzo: %p", (void*)ptr);
    ptr=ptr-2*sizeof(int);
-   printf("\n dopo la sottrazione il puntatore è a questo indirizzo: %p\n", (void*)ptr);
    int* mem=(int*)ptr;
    
    

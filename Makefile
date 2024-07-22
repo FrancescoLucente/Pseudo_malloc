@@ -1,6 +1,6 @@
-# Use clang as the default compiler on macOS
-CC=clang
-CCOPTS=--std=gnu99 -Wall -D_LIST_DEBUG_ -target arm64-apple-macos11
+
+CC=clang  #sostistuire con gcc in ambienti linux
+CCOPTS=--std=gnu99 -Wall -D_LIST_DEBUG_ -target arm64-apple-macos11 #eliminare il target per computer con processori diversi da apple
 
 AR=ar
 

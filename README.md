@@ -1,1 +1,3 @@
 # Pseudo_malloc
+Il progetto emula il funzionamento di una malloc e di una free implementate con l'uso di buddy allocator per piccole assegnazioni,minori di 1024 bytes, e mmap per grandi allocazioni.Il buddy allocator è implementato tramite l'uso di bitmap per gestire l'allocazione dei blocchi e una memoria allocata esternamente dove memorizzare i dati.La struttura ad albero è rispettata considerando che gli indici dei figli sono 2n+1 e 2n+2. In entrambi i casi si assegnano 8 byte di overhead per capire come deallocare e in base alla tipologia di allocazione avremo o l'indice del bit all'interno della bitmap o la dimensione da deallocare. 
+Per computer diversi da mac con processori arm bisogna cambiare il compilatore all'interno del makefile e eliminare il target.
