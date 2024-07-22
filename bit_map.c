@@ -13,7 +13,7 @@ void BitMap_init(BitMap* bit_map, int num_bits, char* buffer){
         printf("Errore: buffer non allocato\n");
         return;
     }
-    printf("BitMap_init: buffer address = %p, num_bits = %d\n", (void *)buffer, num_bits);
+   
     bit_map->buffer = buffer;
     bit_map->num_bits = num_bits;
     bit_map->buffer_size = BitMap_getBytes(num_bits);

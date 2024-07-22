@@ -1,13 +1,12 @@
 #include <assert.h>
-#include <math.h> // for floor and log2
+#include <math.h> 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "buddy_allocator.h"
 #include "bit_map.h"
 
-// these are trivial helpers to support you in case you want
-// to do a bitmap implementation
+
 
 int levelIdx(size_t idx) { return (int)floor(log2(idx+1)); };
 
@@ -31,9 +30,9 @@ int startIdx(int idx) { return firstIdx(levelIdx(idx)); }
 int find_level(BuddyAllocator* alloc ,int size){
   int level=0;
   int ret=-1;
-  while (level<alloc->num_levels){
+  while (level<=alloc->num_levels){
     if (size>alloc->memory_size>>(level+1)) return level;
-    if (level==alloc->num_levels-1) return level;
+    if (level==alloc->num_levels) return level;
     level++;
   }
   return ret;
@@ -54,11 +53,11 @@ int count_parents(int idx,BuddyAllocator* alloc){
 
 
 
-// computes the size in bytes for the allocator
+
 int BuddyAllocator_calcSize(int num_levels) {
   int list_items = (1 << (num_levels))-1; // maximum number of allocations, used
                                           // to determine the max list items
-  int size=list_items;
+  
   return list_items;
 }
 void BuddyAllocator_update_childs(BuddyAllocator* alloc,int idx,int value){
@@ -79,32 +78,45 @@ void BuddyAllocator_merge(BuddyAllocator* alloc, int idx){
 }
 void BuddyAllocator_update_parents(BuddyAllocator* alloc, int idx,int value){
   int bit_padre=BitMap_bit(&(alloc->bitmap),parentIdx(idx));
-  printf("\nil bit di sto cazzo di padre è %d",bit_padre);
   if (idx<=0||bit_padre==value) return;
   BitMap_setBit(&(alloc->bitmap),parentIdx(idx),value);
   BuddyAllocator_update_parents(alloc,parentIdx(idx),value);
 }
-void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int buffer_size, char *memory,int memory_size, int min_bucket_size) {
+int BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int buffer_size, char *memory,int memory_size, int min_bucket_size) {
 
   if (!buffer){ 
-    printf("buffer per bitmap non corretto");
-    return;
+    printf("\nbuffer per bitmap non corretto");
+    return 0;
     }
   if (!memory){
-    printf("memoria non corretta");
-    return;
+    printf("\nmemoria non corretta");
+    return 0;
   }
+  
+  if(memory_size<=BuddyAllocator_calcSize(num_levels)){
+    printf("\ndimensione memoria non corretta");
+    return 0;
+  }
+
+
+
   //controlli vari
   int max_levels = floor(log2(memory_size / min_bucket_size));
-  assert(num_levels <= max_levels);
+  if(num_levels > max_levels){
+    printf("\nnumero livelli non corretto");
+    return 0;
+  }
+  
   int max_items =(1<<(num_levels+1))-1;
   int bitmap_size=(max_items+7)/8;
-  assert(buffer_size >= bitmap_size);
-  assert(memory_size>=BuddyAllocator_calcSize(num_levels));
-
-
-
-
+  if(buffer_size < bitmap_size){
+    printf("\ndimensione buffer non corretta");
+    return 0;
+  }
+if (min_bucket_size<16){
+  printf("\nnumero di livelli troppo basso");
+  return 0;
+}
   if (log2(memory_size) != floor(log2(memory_size))){
         memory_size = min_bucket_size << num_levels;
     }
@@ -129,7 +141,7 @@ void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int
   printf("\tbucket size:%d\n", min_bucket_size);
   printf("\tmanaged memory %d bytes\n", (1 << num_levels) * min_bucket_size);
 
-  
+  return 1;
   
   
   
@@ -138,6 +150,11 @@ void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int
 
 
 void BuddyAllocator_releaseBuddy(BuddyAllocator *alloc, int idx) {
+  if (!alloc){ 
+    printf("\n buddy allocator non valido");
+    return;
+
+  }
   if (BitMap_bit(&(alloc->bitmap),idx)==0){
     printf("\nrisorsa già deallocata\n");
     return;
@@ -147,9 +164,9 @@ void BuddyAllocator_releaseBuddy(BuddyAllocator *alloc, int idx) {
   BuddyAllocator_merge(alloc,idx);
 }
 
-// allocates memory
+
 void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
-  // we determine the level of the page
+  
   if (!alloc||size<=0){
     printf("\nerrore nei parametri\n");
     return NULL;
@@ -181,7 +198,7 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
     i++;
   }
 
-  if (!found){
+  if (found==0){
     ("\nnessun blocco libero trovato\n");
     return NULL;
   }
@@ -196,7 +213,7 @@ void *BuddyAllocator_malloc(BuddyAllocator *alloc, int size) {
 return (void*)(result + 2);
 
 }
-// releases allocated memory
+
 
 void BuddyAllocator_free(BuddyAllocator *alloc, void *mem) {
 #ifdef _VERBOSE_
@@ -206,12 +223,10 @@ void BuddyAllocator_free(BuddyAllocator *alloc, void *mem) {
     printf("\nBuddyAllocator_free|WARINING, cannot free this memory address\n");
     return; 
   }
-  printf("\ninizio a deallocare\n");
-  // we retrieve the buddy from the system
-  printf("il puntatore che ci è stato passato punta a %p",(void*)mem);
+ 
   int* tmp=(int*)mem;
   int idx=*(tmp+1);
-  printf("dopo cast e somma punta a: %p",(void*)(tmp+1));
+
   printf("\ninizio a deallocare partendo dall'indice %d   %p\n",idx,(tmp+1));
   BuddyAllocator_releaseBuddy(alloc,idx);
   

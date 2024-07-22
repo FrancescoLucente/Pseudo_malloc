@@ -3,22 +3,22 @@
 
 #define MAX_LEVELS 16
 
-// one entry of the buddy list
+
 
 
 
 typedef struct  {
   int num_levels;
-  char* memory; // the memory area to be managed
+  char* memory; 
   int memory_size;
-  int min_bucket_size;// the minimum page of RAM that can be returned
+  int min_bucket_size;
   BitMap bitmap; 
 } BuddyAllocator;
 
 
 int BuddyAllocator_calcSize(int num_levels);
 
-void BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int buffer_size, char *memory,int memory_size, int min_bucket_size);
+int BuddyAllocator_init(BuddyAllocator *alloc, int num_levels, char *buffer,int buffer_size, char *memory,int memory_size, int min_bucket_size);
 
 
 int BuddyAllocator_getBuddy(BuddyAllocator* alloc, int level);

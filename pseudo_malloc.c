@@ -12,17 +12,18 @@
 
 
 
-void* pseudo_malloc(size_t size,BuddyAllocator* alloc){
+void* pseudo_malloc(int size,BuddyAllocator* alloc){
     void* result;
-    printf("\nentro nella malloc\n");
-    
-   
     if (size<=0){
         printf("\ndimensione non corretta per un'allocazione\n");
         return NULL;
     }
     int total_size=size+8;
     if (size<1024){
+        if (!alloc){
+            printf("\n inserire buddy allocator valido");
+            return NULL;
+        }
         result=BuddyAllocator_malloc(alloc,total_size);
         if (!result){
             printf("\nerrore nell'allocamento con BuddyAllocator\n");
@@ -39,14 +40,16 @@ void* pseudo_malloc(size_t size,BuddyAllocator* alloc){
         *((int*)result)=1;
         *(((int*)result)+1)=total_size;
     }
-    
+    printf("\nnel puntatore %p ho assegnato il valore %d, nel puntatore %p ho assegnato il valore %d e restituisco il puntatore %p\n",
+        (void*)((int*)result), *((int*)result),(void*)(((int*)result)+1),*(((int*)result)+1),(void*)(((int*)result)+2));
     return (void*)(((int*)result)+2);
 }
-void pseudo_free(void*ptr,BuddyAllocator* alloc){
-    if(!ptr){
+void pseudo_free(void**memo,BuddyAllocator* alloc){
+    if(*memo==NULL){
         printf("\nerrore, impossibile liberare una risorsa null\n");
         return;
     }
+    void* ptr=*memo;
     printf("il puntatore è a questo indirizzo: %p", (void*)ptr);
    ptr=ptr-2*sizeof(int);
    printf("\n dopo la sottrazione il puntatore è a questo indirizzo: %p\n", (void*)ptr);
@@ -57,10 +60,12 @@ void pseudo_free(void*ptr,BuddyAllocator* alloc){
     if(mem[0]==0){
         
         BuddyAllocator_free(alloc,ptr);
+        *memo=NULL;
     }else if (mem[0]==1){
         if (munmap((void*)ptr,mem[1])){
             perror("\nerrore nella rimozione della memoria mappata\n");
         }
+        *memo=NULL;
     }else{
         printf("\nerrore indefinito nella free\n");
     }
